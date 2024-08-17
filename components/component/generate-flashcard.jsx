@@ -6,16 +6,20 @@ import { NavigationMenu, NavigationMenuList, NavigationMenuLink, NavigationMenuI
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
 import { Card, CardContent } from "../ui/card"
-import { Select } from "../ui/select"
+import { Select, SelectContent, SelectLabel, SelectGroup, SelectTrigger, SelectValue, SelectItem } from "../ui/select"
 import { useUser, SignInButton, UserButton, ClerkProvider } from "@clerk/nextjs";
 import markdownit from "markdown-it"
 import { pdfjs } from 'react-pdf';
 import { useForm } from "react-hook-form"
 import { FileCard } from "./file-card"
 import { FileInput } from "./file-input"
+import { experimental_useObject as useObject } from 'ai/react';
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-// import { Flashcard } from "./flashcard"
-// import { FlashcardDialog } from "./flashcard-dialog"
+import { Flashcard } from "./flashcard"
+import { flashcardSchema } from "@/app/api/generate-flashcards/schema"
+import { ToastAction } from "../ui/toast"
+import { useToast } from "../ui/use-toast"
+
 import {
     Form,
     FormControl,
@@ -26,14 +30,26 @@ import {
 import { Sparkles } from "lucide-react"
 
 export default function GenerateFlashcard() {
+    const {toast} = useToast();
     const { isSignedIn } = useUser();
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inputText, setInputText] = useState("");
     const [dragActive, setDragActive] = useState(false);
     const [fileContent, setFileContent] = useState('');
-
+    const [numFlashcards, setNumFlashcards] = useState(5); // Default value of 5
     const form = useForm();
+    const [flashcards, setFlashcards] = useState([]);
+    const [deckname, setDeckname] = useState('');
+
+    const { object, submit } = useObject({
+        api: '/api/generate-flashcards',
+        schema: flashcardSchema,
+        onFinish: (result) => {
+            setFlashcards(result.object.flashcards)
+            setDeckname(result.object.deck_name)
+        }
+      });
 
     const handleFileRemove = async (event) => {
         setFile(null);  // Clear the file
@@ -42,25 +58,8 @@ export default function GenerateFlashcard() {
 
     const handleFileChange = async (file) => {
         setFile(file);
+        setInputText('');
     };
-
-      const handleDragOver = (e) => {
-        e.preventDefault();
-        setDragActive(true);
-      };
-
-      const handleDragLeave = () => {
-        setDragActive(false);
-      };
-
-      const handleDrop = (e) => {
-        e.preventDefault();
-        setDragActive(false);
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile) {
-          setFile(droppedFile);
-        }
-      };
 
       const handleGenerate = async () => {
         if (file){
@@ -88,17 +87,75 @@ export default function GenerateFlashcard() {
                     textContent += text.items.map((item) => item.str).join(' ');
                   }
                   content = textContent;
+
                 }
 
                 setFileContent(content);
-                console.log(content); // Print content to the console to verify
+                const contentWithFlashcards = `${numFlashcards} ${content}`;
+                submit(contentWithFlashcards)
+
 
               } catch (error) {
                 console.error('Error reading file:', error);
               }
+        } else if (inputText) {
+            const contentWithFlashcards = `${numFlashcards} ${inputText}`;
+            submit(contentWithFlashcards)
         }
 
       }
+
+      const updateFlashcard = (index, updatedFlashcard) => {
+        setFlashcards(prevState => {
+            const newFlashcards = [...prevState];
+            newFlashcards[index] = updatedFlashcard;
+            return newFlashcards;
+        });
+    };
+
+
+    const deleteFlashcard = (index, event) => {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        let deletedFlashcard;
+        setFlashcards(prevState => {
+            const newFlashcards = [...prevState];
+            if (index >= 0 && index < newFlashcards.length) {
+                deletedFlashcard = newFlashcards.splice(index, 1)[0];
+            }
+            return newFlashcards;
+        });
+
+        if (deletedFlashcard) {
+            toast({
+                description: "Flashcard deleted",
+                variant: "destructive",
+                action: (
+                    <ToastAction altText="Undo" onClick={() => undoDelete(deletedFlashcard, index)}>
+                        Undo
+                    </ToastAction>
+                ),
+            });
+        } else {
+            toast({
+                description: "Failed to delete flashcard",
+                variant: "destructive",
+            });
+        }
+    };
+
+
+    const undoDelete = (flashcard, index) => {
+        setFlashcards(prevState => {
+            const newFlashcards = [...prevState];
+            newFlashcards.splice(index, 0, flashcard);
+            return newFlashcards;
+        });
+    };
+
+
 
       return (
         <>
@@ -183,65 +240,80 @@ export default function GenerateFlashcard() {
           <h1 className="mt-20 mb-20 text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
             Turn Lecture Slides into Flashcards
           </h1>
-          <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
-            <div className="w-full">
-                <Textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter your lecture notes here..."
-                className="h-32 resize-none w-full"
-                />
+          <div className="flex flex-col items-center gap-4 w-full max-w-lg mx-auto">
+          <div className="w-full">
+                {file ? (
+                    <FileCard file={file} handleFileRemove={handleFileRemove} />
+                ) : (
+                    <Textarea
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        placeholder="Enter your lecture notes here..."
+                        className="h-32 resize-none w-full"
+                    />
+                )}
             </div>
-            <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleGenerate)} className="grid w-full items-start gap-6">
-                        {file ? (
-                            isLoading === false ? (
-                                <>
-                                    <FileCard file={file} handleFileRemove={handleFileRemove} />
-                                    < Button type="submit" disabled={file === null}>
-                                        <Sparkles className="mr-2 h-4 w-4" />Generate flashcards
-                                    </Button>
-                                </>
-                            ) : (
-                                <div className="mb-6">
-                                    <FileCard file={file} />
-                                </div>
-                            )
-                        ) : (
-                            <FormField
-                                control={form.control}
-                                name="document"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <FileInput handleFileChange={handleFileChange} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
 
-                    </form>
-                </Form>
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleGenerate)} className="grid w-full items-start gap-6">
+    <div>
+        {file || inputText ? (
+            <div className="mt-5 flex flex-row justify-between">
+                <Select
+                    id="number-of-cards"
+                    defaultValue="5"
+                    onValueChange={(value) => setNumFlashcards(Number(value))}
+                >
+                    <SelectTrigger className="w-[230px]">
+                        <SelectValue placeholder="Select number of cards" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Number of Cards</SelectLabel>
+                            {[5, 10, 15, 20, 25, 30].map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                    {num}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <Button type="submit" disabled={inputText.trim() === "" && !file}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards
+                </Button>
+            </div>
+        ) : (
+            <>
+                <FormField
+                    control={form.control}
+                    name="document"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <FileInput handleFileChange={handleFileChange} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </>
+        )}
+    </div>
+</form>
+
+</Form>
+
             </div>
         </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
-          <Card>
-            <CardContent className="flex aspect-square items-center justify-center p-6">
-              <span className="text-4xl font-semibold">Flashcard 1</span>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex aspect-square items-center justify-center p-6">
-              <span className="text-4xl font-semibold">Flashcard 2</span>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex aspect-square items-center justify-center p-6">
-              <span className="text-4xl font-semibold">Flashcard 3</span>
-            </CardContent>
-          </Card>
+        <div className="mx-auto max-w-lg mt-20 grid grid-cols-1 gap-4 mt-8 w-full">
+            {flashcards.map((flashcard, index) => (
+                <Flashcard key={index}
+                    flashcard={flashcard}
+                    index={index}
+                    updateFlashcard={updateFlashcard}
+                    deleteFlashcard={deleteFlashcard}
+                />
+            ))}
         </div>
       </main>
       </>

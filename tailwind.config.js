@@ -53,6 +53,9 @@ export default {
         md: `calc(var(--radius) - 2px)`,
         sm: `calc(var(--radius) - 4px)`
       },
+      maxWidth: {
+        'lg': '40rem',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: 0 },

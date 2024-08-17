@@ -8,19 +8,97 @@ import { Textarea } from "../ui/textarea"
 import { Card, CardContent } from "../ui/card"
 import { Select } from "../ui/select"
 import { useUser, SignInButton, UserButton, ClerkProvider } from "@clerk/nextjs";
+import markdownit from "markdown-it"
+import { pdfjs } from 'react-pdf';
+import { useForm } from "react-hook-form"
+import { FileCard } from "./file-card"
+import { FileInput } from "./file-input"
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// import { Flashcard } from "./flashcard"
+// import { FlashcardDialog } from "./flashcard-dialog"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormMessage,
+} from "@/components/ui/form";
+import { Sparkles } from "lucide-react"
 
 export default function GenerateFlashcard() {
     const { isSignedIn } = useUser();
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inputText, setInputText] = useState("");
+    const [dragActive, setDragActive] = useState(false);
+    const [fileContent, setFileContent] = useState('');
+
+    const form = useForm();
+
+    const handleFileRemove = async (event) => {
+        setFile(null);  // Clear the file
+    };
 
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0])
+    const handleFileChange = async (file) => {
+        setFile(file);
+    };
+
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        setDragActive(true);
+      };
+
+      const handleDragLeave = () => {
+        setDragActive(false);
+      };
+
+      const handleDrop = (e) => {
+        e.preventDefault();
+        setDragActive(false);
+        const droppedFile = e.dataTransfer.files[0];
+        if (droppedFile) {
+          setFile(droppedFile);
+        }
+      };
+
+      const handleGenerate = async () => {
+        if (file){
+            const fileType = file.name.split('.').pop().toLowerCase();
+
+            try {
+                let content = '';
+
+                if (fileType === 'txt' || fileType === 'md') {
+                  // Handle txt and md files
+                  const text = await file.text();
+                  if (fileType === 'md') {
+                    const md = new markdownit();
+                    content = md.render(text);
+                  } else {
+                    content = text;
+                  }
+                } else if (fileType === 'pdf') {
+                  // Handle pdf files
+                  const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+                  let textContent = '';
+                  for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const text = await page.getTextContent();
+                    textContent += text.items.map((item) => item.str).join(' ');
+                  }
+                  content = textContent;
+                }
+
+                setFileContent(content);
+                console.log(content); // Print content to the console to verify
+
+              } catch (error) {
+                console.error('Error reading file:', error);
+              }
+        }
+
       }
-
-      const handleGenerate = () => {}
 
       return (
         <>
@@ -114,24 +192,39 @@ export default function GenerateFlashcard() {
                 className="h-32 resize-none w-full"
                 />
             </div>
-            <div className="w-full">
-                <div className="flex flex-col items-center justify-center gap-2 w-full">
-                <div className="flex items-center justify-center w-full h-32 rounded-md border-2 border-dashed border-muted-foreground transition-colors hover:border-primary hover:bg-muted/50 cursor-pointer">
-                    <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
-                    <label htmlFor="file-upload" className="flex flex-col items-center justify-center gap-1">
-                    <UploadIcon className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">Upload a file</span>
-                    <span className="text-xs text-muted-foreground">or drag and drop it here</span>
-                    </label>
-                </div>
-                </div>
-            </div>
-            </div>
+            <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleGenerate)} className="grid w-full items-start gap-6">
+                        {file ? (
+                            isLoading === false ? (
+                                <>
+                                    <FileCard file={file} handleFileRemove={handleFileRemove} />
+                                    < Button type="submit" disabled={file === null}>
+                                        <Sparkles className="mr-2 h-4 w-4" />Generate flashcards
+                                    </Button>
+                                </>
+                            ) : (
+                                <div className="mb-6">
+                                    <FileCard file={file} />
+                                </div>
+                            )
+                        ) : (
+                            <FormField
+                                control={form.control}
+                                name="document"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <FileInput handleFileChange={handleFileChange} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
-          <div className="flex items-center justify-center gap-4">
-            <Button onClick={handleGenerate}>Generate Flashcards</Button>
-
-          </div>
+                    </form>
+                </Form>
+            </div>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
           <Card>

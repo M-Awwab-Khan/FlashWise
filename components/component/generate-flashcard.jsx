@@ -1,18 +1,13 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuLink,
-  NavigationMenuItem,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Card, CardContent } from "../ui/card";
 import {
   Select,
   SelectContent,
@@ -26,7 +21,6 @@ import {
   useUser,
   SignInButton,
   UserButton,
-  ClerkProvider,
 } from "@clerk/nextjs";
 import markdownit from "markdown-it";
 import { pdfjs } from "react-pdf";
@@ -34,30 +28,31 @@ import { useForm } from "react-hook-form";
 import { FileCard } from "./file-card";
 import { FileInput } from "./file-input";
 import { experimental_useObject as useObject } from "ai/react";
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import { Flashcard } from "./flashcard";
 import { flashcardSchema } from "@/app/api/generate-flashcards/schema";
 import { ToastAction } from "../ui/toast";
 import { useToast } from "../ui/use-toast";
 
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormMessage,
 } from "@/components/ui/form";
 import { Sparkles } from "lucide-react";
 
 export default function GenerateFlashcard() {
-  const { toast } = useToast();
-  const { isSignedIn } = useUser();
-  const [file, setFile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inputText, setInputText] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const [fileContent, setFileContent] = useState("");
-  const [numFlashcards, setNumFlashcards] = useState(5); // Default value of 5
+    const { toast } = useToast();
+    const { isSignedIn } = useUser();
+    const [file, setFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [inputText, setInputText] = useState("");
+    const [dragActive, setDragActive] = useState(false);
+    const [fileContent, setFileContent] = useState("");
+    const [numFlashcards, setNumFlashcards] = useState(5); // Default value of 5
   const form = useForm();
   const [flashcards, setFlashcards] = useState([]);
   const [deckname, setDeckname] = useState("");

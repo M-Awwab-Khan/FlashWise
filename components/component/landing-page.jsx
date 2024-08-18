@@ -1,4 +1,4 @@
-
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
@@ -11,8 +11,10 @@ import {
     SignedOut,
     UserButton
   } from '@clerk/nextjs'
+import { useRouter } from "next/navigation"
 
 export function LandingPage() {
+    const router = useRouter()
   return (
     (<div className="flex flex-col min-h-[100dvh]">
       <header className="bg-primary px-4 lg:px-6 h-14 flex items-center justify-between">
@@ -125,7 +127,7 @@ export function LandingPage() {
                 documents, making studying and review a breeze.
               </p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button variant="outline" className="w-full min-[400px]:w-auto">
+                <Button variant="outline" className="w-full min-[400px]:w-auto" onClick={() => router.push('/generate')}>
                   Get Started
                 </Button>
               </div>

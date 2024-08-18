@@ -21,6 +21,9 @@ import {
   useUser,
   SignInButton,
   UserButton,
+  SignUpButton,
+  SignedOut,
+  SignedIn
 } from "@clerk/nextjs";
 import markdownit from "markdown-it";
 import { pdfjs } from "react-pdf";
@@ -32,6 +35,9 @@ import { Flashcard } from "./flashcard";
 import { flashcardSchema } from "@/app/api/generate-flashcards/schema";
 import { ToastAction } from "../ui/toast";
 import { useToast } from "../ui/use-toast";
+import { db } from "@/app/firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import {v4 as uuidv4} from "uuid"
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -42,11 +48,11 @@ import {
     FormItem,
     FormMessage,
 } from "@/components/ui/form";
-import { Sparkles } from "lucide-react";
+import { Download, Sparkles } from "lucide-react";
 
 export default function GenerateFlashcard() {
     const { toast } = useToast();
-    const { isSignedIn } = useUser();
+    const { isSignedIn, isLoaded, user } = useUser();
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inputText, setInputText] = useState("");
@@ -56,6 +62,7 @@ export default function GenerateFlashcard() {
   const form = useForm();
   const [flashcards, setFlashcards] = useState([]);
   const [deckname, setDeckname] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
 
   const { object, submit } = useObject({
     api: "/api/generate-flashcards",
@@ -63,6 +70,7 @@ export default function GenerateFlashcard() {
     onFinish: (result) => {
       setFlashcards(result.object.flashcards);
       setDeckname(result.object.deck_name);
+      setIsSaved(false);
     },
   });
 
@@ -76,6 +84,13 @@ export default function GenerateFlashcard() {
   };
 
   const handleGenerate = async () => {
+    if (!isSignedIn) {
+        toast({
+            description: "Please log in to generate flashcards.",
+            variant: "destructive",
+          });
+          return
+    }
     if (file) {
       const fileType = file.name.split(".").pop().toLowerCase();
 
@@ -167,6 +182,44 @@ export default function GenerateFlashcard() {
     });
   };
 
+  const saveFlashcards = async () => {
+    if (!isSignedIn) {
+        toast({
+            description: "Please log in to generate flashcards.",
+            variant: "destructive",
+          });
+          return
+    }
+    if (isSaved) {
+        toast({
+            description: "Flashcards already saved."
+        })
+        return;
+    }
+    const userId = user.id;
+    const deckId = uuidv4()
+    try {
+        // Create a reference to the user's document
+        const deckDocRef = doc(collection(db, "users", userId, "decks"), deckId);
+
+        // Save the flashcards under the user's deck
+        await setDoc(deckDocRef, {
+            deck_name: deckname, // Make sure `deckname` is defined in your component
+            flashcards: flashcards // The array of flashcard objects
+        });
+
+        toast({
+            description: "Your flashcards have been saved successfully.",
+        })
+        setIsSaved(true);
+      } catch (error) {
+        toast({
+            description: "Unknown error occured",
+            variant: "destructive"
+        })
+      }
+  }
+
   return (
     <>
       <header className="px-4 lg:px-6 h-14 flex items-center justify-between">
@@ -232,16 +285,21 @@ export default function GenerateFlashcard() {
         </div>
 
         <div className="ml-auto flex items-center space-x-4">
-          {isSignedIn ? (
+         <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="default" className="w-full min-[400px]:w-auto">
+                Login
+              </Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button variant="outline" className="w-full min-[400px]:w-auto">
+                Sign Up
+              </Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
             <UserButton afterSignOutUrl="/" />
-          ) : (
-            <>
-              <SignInButton mode="modal">
-                <Button variant="outline">Log In</Button>
-              </SignInButton>
-              <Button variant="default">Sign Up</Button>
-            </>
-          )}
+          </SignedIn>
         </div>
       </header>
 
@@ -322,7 +380,8 @@ export default function GenerateFlashcard() {
             </Form>
           </div>
         </div>
-        <div className="mx-auto max-w-lg mt-20 grid grid-cols-1 gap-4 mt-8 w-full">
+        <div className="mx-auto max-w-lg mt-20 grid grid-cols-1 gap-4 w-full">
+            {deckname}
           {flashcards.map((flashcard, index) => (
             <Flashcard
               key={index}
@@ -332,6 +391,11 @@ export default function GenerateFlashcard() {
               deleteFlashcard={deleteFlashcard}
             />
           ))}
+          {flashcards.length > 0 && !isSaved &&
+          <Button type="submit" onClick={saveFlashcards}>
+            <Download className="mr-2 h-4 w-4" /> Save All
+          </Button>
+          }
         </div>
       </main>
     </>

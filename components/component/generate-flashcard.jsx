@@ -36,8 +36,8 @@ import { flashcardSchema } from "@/app/api/generate-flashcards/schema";
 import { ToastAction } from "../ui/toast";
 import { useToast } from "../ui/use-toast";
 import { db } from "@/app/firebase";
-import { collection, doc, setDoc } from "firebase/firestore";
-import {v4 as uuidv4} from "uuid"
+import { collection, doc, addDoc, serverTimestamp } from "firebase/firestore";
+
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -197,14 +197,16 @@ export default function GenerateFlashcard() {
         return;
     }
     const userId = user.id;
-    const deckId = uuidv4()
+    console.log(user.emailAddresses)
     try {
-        // Create a reference to the user's document
-        const deckDocRef = doc(collection(db, "users", userId, "decks"), deckId);
+
+        const decksCollectionRef = collection(db, "users", userId, "decks");
 
         // Save the flashcards under the user's deck
-        await setDoc(deckDocRef, {
-            deck_name: deckname, // Make sure `deckname` is defined in your component
+        await addDoc(decksCollectionRef, {
+            name: deckname, // The name of the deck
+            num_of_flashcards: flashcards.length, // The number of flashcards
+            created_at: serverTimestamp(), // Timestamp when the deck was created
             flashcards: flashcards // The array of flashcard objects
         });
 
@@ -213,6 +215,7 @@ export default function GenerateFlashcard() {
         })
         setIsSaved(true);
       } catch (error) {
+        console.log(error)
         toast({
             description: "Unknown error occured",
             variant: "destructive"
@@ -273,7 +276,7 @@ export default function GenerateFlashcard() {
 
               <NavigationMenuLink asChild>
                 <Link
-                  href="#"
+                  href="/my-decks"
                   className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
                   prefetch={false}
                 >

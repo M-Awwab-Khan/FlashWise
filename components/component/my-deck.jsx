@@ -4,8 +4,44 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ClerkProvider, useUser } from "@clerk/nextjs"
+import {useState, useEffect} from "react"
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from "@/app/firebase"
+
 
 export function MyDecks() {
+
+    const [decks, setDecks] = useState([]);
+    const {isSignedIn, user} = useUser();
+
+    useEffect(() => {
+        const fetchDecks = async () => {
+          try {
+            // Reference to the 'decks' collection for the specific user
+            const decksCollectionRef = collection(db, 'users', user.id, 'decks');
+
+            // Fetch the decks
+            const q = query(decksCollectionRef);
+            const querySnapshot = await getDocs(q);
+
+            // Extract deck data
+            const decksData = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+
+            setDecks(decksData);
+          } catch (err) {
+            console.error('Error fetching decks: ', err);
+
+          }
+        };
+
+        fetchDecks();
+      }, [user]);
+
+
   return (
     (<div className="flex flex-col h-full">
       <header
@@ -19,7 +55,7 @@ export function MyDecks() {
           <span className="text-lg font-medium">John Doe</span>
         </div>
       </header>
-      <div className="flex-1 p-6 grid gap-6">
+      <div className="flex-1 p-20 grid gap-6">
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <Input placeholder="Search decks..." className="w-full" />
@@ -39,9 +75,12 @@ export function MyDecks() {
           </Select>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="p-6 flex flex-col gap-4">
+
+
+        {decks.map(deck => (
+          <Card key={deck.id} className="p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Vocabulary Deck</h3>
+              <h3 className="text-xl font-bold">{deck.name}</h3>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon">
                   <FilePenIcon className="h-4 w-4" />
@@ -53,118 +92,13 @@ export function MyDecks() {
                 </Button>
               </div>
             </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>100 flashcards</div>
-              <div>Created on June 15, 2023</div>
+            <div className="flex items-center justify-between text-muted-foreground text-sm">
+              <div>{deck.num_of_flashcards} flashcards</div>
+              <div>Created on {new Date(deck.created_at.seconds * 1000).toLocaleDateString()}</div>
             </div>
             <Button variant="outline">View Deck</Button>
           </Card>
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Math Formulas</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
-                  <FilePenIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </div>
-            </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>50 flashcards</div>
-              <div>Created on May 1, 2023</div>
-            </div>
-            <Button variant="outline">View Deck</Button>
-          </Card>
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">History Timeline</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
-                  <FilePenIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </div>
-            </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>75 flashcards</div>
-              <div>Created on April 20, 2023</div>
-            </div>
-            <Button variant="outline">View Deck</Button>
-          </Card>
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Biology Terms</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
-                  <FilePenIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </div>
-            </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>120 flashcards</div>
-              <div>Created on March 10, 2023</div>
-            </div>
-            <Button variant="outline">View Deck</Button>
-          </Card>
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Geography Landmarks</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
-                  <FilePenIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </div>
-            </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>80 flashcards</div>
-              <div>Created on February 5, 2023</div>
-            </div>
-            <Button variant="outline">View Deck</Button>
-          </Card>
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Literature Quotes</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
-                  <FilePenIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </div>
-            </div>
-            <div
-              className="flex items-center justify-between text-muted-foreground text-sm">
-              <div>60 flashcards</div>
-              <div>Created on January 15, 2023</div>
-            </div>
-            <Button variant="outline">View Deck</Button>
-          </Card>
+        ))}
         </div>
       </div>
     </div>)

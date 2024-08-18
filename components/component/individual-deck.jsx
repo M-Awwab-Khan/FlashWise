@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { db } from "@/app/firebase";
 import { doc, getDoc } from "firebase/firestore"
-import { useUser } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import { Card, CardContent } from "../ui/card";
+import Link from "next/link";
+import { Avatar } from "../ui/avatar";
 
 export function IndividualDeck(props) {
     const [deck, setDeck] = useState(null);
@@ -44,24 +46,31 @@ export function IndividualDeck(props) {
     }, [user, deckId])
 
     return (
-        (<div className="flex flex-col h-full">
+        (<div className="flex flex-col h-full min-h-screen">
             <header
                 className="bg-primary text-primary-foreground py-4 px-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" className="rounded-full">
-                        <ArrowLeftIcon className="w-5 h-5" />
-                        <span className="sr-only">Back</span>
+                        <Link href='/my-decks'>
+                            <ArrowLeftIcon className="w-5 h-5" />
+                            <span className="sr-only">Back</span>
+                        </Link>
                     </Button>
-                    <h1 className="text-xl font-semibold">JavaScript Fundamentals</h1>
+                    <h1 className="text-xl font-semibold">{deck && deck.name}</h1>
                 </div>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                    <FilePenIcon className="w-5 h-5" />
-                    <span className="sr-only">Edit</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Avatar>
+                        <UserButton />
+                    </Avatar>
+                    <div className="text-sm">
+                        <div className="font-medium">{user && user.fullName}</div>
+                        <div className="text-white">{user && user.emailAddresses[0].emailAddress}</div>
+                    </div>
+                </div>
             </header>
             <div
                 className="flex-1 bg-muted/40 p-6 md:p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {deck.flashcards.map((flashcard, index) => (
+                {deck && deck.flashcards.map((flashcard, index) => (
                     <Card
                         key={index}
                         className={`flip-card ${flippedCards[index] ? 'flipped' : ''}`}

@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useUser } from "@clerk/nextjs"
+import { UserButton, useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from "@/app/firebase"
 import { useRouter } from "next/navigation"
-
+import Link from "next/link"
+import { ArrowLeftIcon } from "lucide-react"
 
 export function MyDecks() {
 
@@ -35,7 +36,6 @@ export function MyDecks() {
                 }));
 
                 setDecks(decksData);
-                console.log(decksData)
             } catch (err) {
                 console.error('Error fetching decks: ', err);
 
@@ -56,15 +56,22 @@ export function MyDecks() {
             <div className="w-full min-h-screen bg-background text-foreground">
                 <header className="bg-card py-4 px-6 shadow">
                     <div className="container mx-auto flex items-center justify-between">
-                        <h1 className="text-2xl font-bold">My Decks</h1>
                         <div className="flex items-center gap-4">
+                            <Button variant="ghost" size="icon" className="rounded-full">
+                                <Link href='/generate'>
+                                    <ArrowLeftIcon className="w-5 h-5" />
+                                    <span className="sr-only">Back</span>
+                                </Link>
+                            </Button>
+                            <h1 className="text-2xl font-bold">My Decks</h1>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <Avatar>
-                                <AvatarImage src="/placeholder-user.jpg" alt="User Avatar" />
-                                <AvatarFallback>JD</AvatarFallback>
+                                <UserButton />
                             </Avatar>
                             <div className="text-sm">
-                                <div className="font-medium">John Doe</div>
-                                <div className="text-muted-foreground">johndoe@example.com</div>
+                                <div className="font-medium">{user && user.fullName}</div>
+                                <div className="text-muted-foreground">{user && user.emailAddresses[0].emailAddress}</div>
                             </div>
                         </div>
                     </div>

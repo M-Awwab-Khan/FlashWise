@@ -46,12 +46,11 @@ export function IndividualDeck(props) {
     }, [user, deckId])
 
     return (
-        (<div className="flex flex-col h-full min-h-screen">
-            <header
-                className="bg-primary text-primary-foreground py-4 px-6 flex items-center justify-between">
+        <div className="flex flex-col h-full min-h-screen">
+            <header className="bg-primary text-primary-foreground py-4 px-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" className="rounded-full">
-                        <Link href='/my-decks'>
+                        <Link href="/my-decks">
                             <ArrowLeftIcon className="w-5 h-5" />
                             <span className="sr-only">Back</span>
                         </Link>
@@ -69,19 +68,19 @@ export function IndividualDeck(props) {
                 </div>
             </header>
             <div
-                className="flex-1 bg-muted/40 p-6 md:p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                className="flex-1 bg-muted/40 p-6 md:p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-auto">
                 {deck && deck.flashcards.map((flashcard, index) => (
                     <Card
                         key={index}
-                        className={`flip-card ${flippedCards[index] ? 'flipped' : ''}`}
+                        className={`flip-card w-80 h-80 ${flippedCards[index] ? 'flipped' : ''}`} // Fixed size for the cards
                         onClick={() => handleCardClick(index)}
                     >
                         <div className="flip-card-inner">
-                            <div className="flip-card-front">
+                            <div className="flip-card-front flex items-center justify-center">
                                 {/* Front of the card (question) */}
                                 <div>{flashcard.question}</div>
                             </div>
-                            <div className="flip-card-back">
+                            <div className="flip-card-back flex items-center justify-center">
                                 {/* Back of the card (answer) */}
                                 <div>{flashcard.answer}</div>
                             </div>
@@ -89,8 +88,9 @@ export function IndividualDeck(props) {
                     </Card>
                 ))}
             </div>
-        </div>)
-    );
+        </div>
+    )
+
 }
 
 function ArrowLeftIcon(props) {

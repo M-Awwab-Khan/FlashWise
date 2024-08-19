@@ -66,7 +66,8 @@ export function IndividualDeck(props) {
             // Add the new flashcard to the deck's flashcards array
             const newFlashcard = { question, answer };
             await updateDoc(deckRef, {
-                flashcards: arrayUnion(newFlashcard)
+                flashcards: arrayUnion(newFlashcard),
+                num_of_flashcards: deck.flashcards.length + 1
             });
 
             // Update the deck state to include the new flashcard
@@ -123,9 +124,9 @@ export function IndividualDeck(props) {
                 ))}
 
                 <Dialog>
-                    <DialogTrigger>
+                    <DialogTrigger className="w-64 h-64">
 
-                        <Card className='flex flex-col justify-center items-center w-64 h-64'>
+                        <Card className="flex flex-col justify-center items-center w-64 h-64">
                             <PlusIcon className="w-24 h-24 text-muted-foreground" />
                             <div className="text-muted-foreground">Create New Flashcard</div>
                         </Card>

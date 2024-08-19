@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UserButton, useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
-import { collection, query, updateDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, updateDoc, getDocs, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from "@/app/firebase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -22,6 +22,8 @@ import {
     DialogClose
 } from "@/components/ui/dialog"
 import { Label } from "../ui/label"
+import { ToastAction } from "@radix-ui/react-toast"
+import { useToast } from "../ui/use-toast"
 
 export function MyDecks() {
 
@@ -32,6 +34,7 @@ export function MyDecks() {
 
     const [sortedDecks, setSortedDecks] = useState(decks);
     const [sortOption, setSortOption] = useState('');
+    const { toast } = useToast()
 
 
     const filteredDecks = sortedDecks.filter(deck =>
@@ -111,6 +114,41 @@ export function MyDecks() {
     }
 
 
+    const createNewDeck = async (deckName) => {
+        try {
+
+            const decksCollectionRef = collection(db, "users", user.id, "decks");
+
+            // Save the flashcards under the user's deck
+            await addDoc(decksCollectionRef, {
+                name: deckName, // The name of the deck
+                num_of_flashcards: 0, // The number of flashcards
+                created_at: serverTimestamp(), // Timestamp when the deck was created
+                flashcards: [] // The array of flashcard objects
+            });
+
+            setDecks((prevDecks) => [
+                ...prevDecks, // Spread the previous decks
+                {
+                    name: deckName, // The name of the new deck
+                    num_of_flashcards: 0, // The number of flashcards in the new deck
+                    created_at: serverTimestamp(), // Use Firestore server timestamp
+                    flashcards: [] // The array of flashcard objects for the new deck
+                }
+            ]);
+
+            toast({
+                description: "Your deck have been created successfully.",
+            })
+        } catch (error) {
+            console.log(error)
+            toast({
+                description: "Unknown error occured",
+                variant: "destructive"
+            })
+        }
+    }
+
     return (
         (
             <div className="w-full min-h-screen bg-background text-foreground">
@@ -164,7 +202,41 @@ export function MyDecks() {
                             </div>
 
                         </div>
-                        <Button>Create New Deck</Button>
+
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button>Create New Deck</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Create New Deck</DialogTitle>
+                                    <DialogDescription>
+                                        Enter deck's name to create a new deck. You can add flashcards to it later.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    const formData = new FormData(e.currentTarget);
+                                    const newDeckName = formData.get('new-deck-name').toString();
+
+                                    createNewDeck(newDeckName)
+                                }}>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="flex flex-col">
+                                            <Label htmlFor="new-deck-name" className="text-left pb-2">
+                                                Deck Name
+                                            </Label>
+                                            <Input id="new-deck-name" name="new-deck-name" className="col-span-3" />
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button type="submit">Create</Button>
+                                        </DialogClose>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-48">
                         {filteredDecks.map(deck => (

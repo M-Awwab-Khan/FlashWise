@@ -24,14 +24,14 @@ export function FileInput({ handleFileChange }) {
         const files = event.dataTransfer.files;
         if (files.length > 0) {
             const file = files[0];
-            const supportedExtensions = ['.md', '.txt', '.docx', '.pptx', '.pdf'];
+            const supportedExtensions = ['.md', '.txt', '.pdf'];
             const fileExtension = file.name.split('.').pop().toLowerCase();
 
             if (supportedExtensions.includes(`.${fileExtension}`)) {
                 handleFileChange(file);
             } else {
                 toast({
-                    description: "Unsupported file type. Please upload a markdown (.md), text (.txt), Word (.docx), PowerPoint (.pptx), or PDF (.pdf) file.",
+                    description: "Unsupported file type. Please upload a markdown (.md), text (.txt), or PDF (.pdf) file.",
                     variant: "destructive",
                 });
             }
@@ -43,14 +43,14 @@ export function FileInput({ handleFileChange }) {
         const files = event.target.files;
         if (files && files.length > 0) {
             const file = files[0];
-            const supportedExtensions = ['.md', '.txt', '.docx', '.pptx', '.pdf'];
+            const supportedExtensions = ['.md', '.txt', '.pdf'];
             const fileExtension = file.name.split('.').pop().toLowerCase();
 
             if (supportedExtensions.includes(`.${fileExtension}`)) {
                 handleFileChange(file);
             } else {
                 toast({
-                    description: "Unsupported file type. Please upload a markdown (.md), text (.txt), Word (.docx), PowerPoint (.pptx), or PDF (.pdf) file.",
+                    description: "Unsupported file type. Please upload a markdown (.md), text (.txt), or PDF (.pdf) file.",
                     variant: "destructive",
                 });
             }
@@ -72,12 +72,12 @@ export function FileInput({ handleFileChange }) {
                 <h3 className="text-md font-medium text-center">
                     {isDragging ? 'Drop the file here' : 'Click to upload or drag and drop'}
                 </h3>
-                <p className="text-sm text-muted-foreground">Supported formats: md, pdf, docx, pptx, txt</p>
+                <p className="text-sm text-muted-foreground">Supported formats: md, pdf, txt</p>
             </div>
             <Input
                 className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                 type="file"
-                accept=".md,.txt,.docx,.pptx,.pdf"
+                accept=".md,.txt,.pdf"
                 onChange={onChange}
             />
 

@@ -68,11 +68,11 @@ export function IndividualDeck(props) {
                 </div>
             </header>
             <div
-                className="flex-1 bg-muted/40 p-6 md:p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-auto">
+                className="flex-1 bg-muted/40 p-6 md:p-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-auto">
                 {deck && deck.flashcards.map((flashcard, index) => (
                     <Card
                         key={index}
-                        className={`flip-card w-80 h-80 ${flippedCards[index] ? 'flipped' : ''}`} // Fixed size for the cards
+                        className={`flip-card w-64 h-64 ${flippedCards[index] ? 'flipped' : ''}`} // Fixed size for the cards
                         onClick={() => handleCardClick(index)}
                     >
                         <div className="flip-card-inner">

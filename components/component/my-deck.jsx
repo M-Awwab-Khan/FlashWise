@@ -46,6 +46,28 @@ export function MyDecks() {
         }
     }, [user]);
 
+
+    const [sortedDecks, setSortedDecks] = useState(decks);
+    const [sortOption, setSortOption] = useState('');
+
+    useEffect(() => {
+        const sortDecks = () => {
+            let sorted = [...decks];
+            if (sortOption === 'newest') {
+                sorted.sort((a, b) => b.created_at.seconds - a.created_at.seconds);
+            } else if (sortOption === 'oldest') {
+                sorted.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
+            } else if (sortOption === 'title') {
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortOption === 'flashcards') {
+                sorted.sort((a, b) => b.num_of_flashcards - a.num_of_flashcards);
+            }
+            setSortedDecks(sorted);
+        };
+
+        sortDecks();
+    }, [sortOption, decks]);
+
     const showFlashcardsPage = (id) => {
         router.push(`/deck/${id}`)
     }
@@ -87,7 +109,7 @@ export function MyDecks() {
                                     className="pl-10 pr-4 py-2 rounded-md bg-card border-input focus:border-primary focus:ring-primary"
                                 />
                             </div>
-                            <Select>
+                            <Select onValueChange={(value) => setSortOption(value)}>
                                 <SelectTrigger className="px-4 py-2 rounded-md bg-card border-input focus:border-primary focus:ring-primary">
                                     <SelectValue placeholder="Sort by" />
                                 </SelectTrigger>
@@ -102,7 +124,7 @@ export function MyDecks() {
                         <Button>Create New Deck</Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-48">
-                        {decks.map(deck => (
+                        {sortedDecks.map(deck => (
                             <Card key={deck.id} className="flex flex-col h-auto max-w-md">
                                 <CardContent className="p-4 flex flex-col flex-grow">
                                     <div className="flex items-center justify-between mb-2">

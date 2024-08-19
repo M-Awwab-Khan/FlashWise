@@ -22,7 +22,6 @@ import {
     DialogClose
 } from "@/components/ui/dialog"
 import { Label } from "../ui/label"
-import { ToastAction } from "@radix-ui/react-toast"
 import { useToast } from "../ui/use-toast"
 
 export function MyDecks() {
@@ -61,6 +60,10 @@ export function MyDecks() {
                 setDecks(decksData);
             } catch (err) {
                 console.error('Error fetching decks: ', err);
+                toast({
+                    description: "Error fetching decks",
+                    variant: "destructive"
+                })
 
             }
         };
@@ -108,8 +111,15 @@ export function MyDecks() {
             );
             // Optionally, close the dialog after saving
             document.querySelector('[data-state="open"]')?.click();
+            toast({
+                description: "Your deck has been renamed sucessfully"
+            })
         } catch (error) {
             console.error('Error updating deck name:', error);
+            toast({
+                description: "Error renaming your deck",
+                variant: "destructive"
+            })
         }
     }
 
@@ -329,8 +339,15 @@ export function MyDecks() {
 
                                                                 // Optionally, close the dialog after deletion
                                                                 document.querySelector('[data-state="open"]')?.click();
+                                                                toast({
+                                                                    description: "Deck deleted successfully."
+                                                                })
                                                             } catch (error) {
                                                                 console.error('Error deleting deck:', error);
+                                                                toast({
+                                                                    description: 'Error deleting deck',
+                                                                    variant: 'destructive'
+                                                                })
                                                             }
                                                         }}
                                                     >

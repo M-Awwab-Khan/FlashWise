@@ -20,11 +20,13 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import { useToast } from "../ui/use-toast";
 
 export function IndividualDeck(props) {
     const [deck, setDeck] = useState(null);
     const deckId = props.deckId;
     const { user } = useUser();
+    const { toast } = useToast();
 
     const [flippedCards, setFlippedCards] = useState({});
 
@@ -44,10 +46,15 @@ export function IndividualDeck(props) {
                 if (docSnap.exists()) {
                     setDeck(docSnap.data());
                 } else {
-                    console.error('No such document!');
+                    toast({
+                        description: "No flashcards in this deck."
+                    })
                 }
             } catch (err) {
-                console.error('Error fetching deck: ', err);
+                toast({
+                    description: "An unknown error occured",
+                    variant: "destructive"
+                })
             }
         };
 
@@ -75,8 +82,16 @@ export function IndividualDeck(props) {
                 ...prevDeck,
                 flashcards: [...prevDeck.flashcards, newFlashcard]
             }));
+
+            toast({
+                description: "Flashcard created successfully."
+            })
         } catch (err) {
             console.error('Error adding flashcard: ', err);
+            toast({
+                description: "An unknown error occured",
+                variant: "destructive"
+            })
         }
     };
 

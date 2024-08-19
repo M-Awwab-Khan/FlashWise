@@ -2,11 +2,24 @@
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { db } from "@/app/firebase";
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, addDoc, updateDoc, arrayUnion } from "firebase/firestore"
 import { useUser, UserButton } from "@clerk/nextjs";
 import { Card, CardContent } from "../ui/card";
 import Link from "next/link";
 import { Avatar } from "../ui/avatar";
+import { PlusIcon } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose
+} from "@/components/ui/dialog"
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 
 export function IndividualDeck(props) {
     const [deck, setDeck] = useState(null);
@@ -44,6 +57,27 @@ export function IndividualDeck(props) {
         }
 
     }, [user, deckId])
+
+    const newFlashcard = async ({ question, answer }) => {
+        try {
+            // Reference to the specific deck in Firestore
+            const deckRef = doc(db, 'users', user.id, 'decks', deckId);
+
+            // Add the new flashcard to the deck's flashcards array
+            const newFlashcard = { question, answer };
+            await updateDoc(deckRef, {
+                flashcards: arrayUnion(newFlashcard)
+            });
+
+            // Update the deck state to include the new flashcard
+            setDeck(prevDeck => ({
+                ...prevDeck,
+                flashcards: [...prevDeck.flashcards, newFlashcard]
+            }));
+        } catch (err) {
+            console.error('Error adding flashcard: ', err);
+        }
+    };
 
     return (
         <div className="flex flex-col h-full min-h-screen">
@@ -87,6 +121,63 @@ export function IndividualDeck(props) {
                         </div>
                     </Card>
                 ))}
+
+                <Dialog>
+                    <DialogTrigger>
+
+                        <Card className='flex flex-col justify-center items-center w-64 h-64'>
+                            <PlusIcon className="w-24 h-24 text-muted-foreground" />
+                            <div className="text-muted-foreground">Create New Flashcard</div>
+                        </Card>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>New flashcard</DialogTitle>
+                            <DialogDescription>
+                                Make a new flashcard and save it to your deck. Click save when you're done.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const newFlashcardData = {
+                                    question: formData.get("question"),
+                                    answer: formData.get("answer"),
+                                };
+                                newFlashcard(newFlashcardData);
+                            }}
+                        >
+                            <div className="grid gap-4 py-4">
+                                <div className="flex flex-col">
+                                    <Label htmlFor="question" className="text-left pb-2">
+                                        Question
+                                    </Label>
+                                    <Textarea
+                                        id="question"
+                                        name="question"
+                                        className="col-span-3"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <Label htmlFor="answer" className="text-left pb-2">
+                                        Answer
+                                    </Label>
+                                    <Textarea
+                                        id="answer"
+                                        name="answer"
+                                        className="col-span-3"
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="submit">Save changes</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

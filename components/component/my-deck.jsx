@@ -28,6 +28,15 @@ export function MyDecks() {
     const [decks, setDecks] = useState([]);
     const { user } = useUser();
     const router = useRouter()
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const [sortedDecks, setSortedDecks] = useState(decks);
+    const [sortOption, setSortOption] = useState('');
+
+
+    const filteredDecks = sortedDecks.filter(deck =>
+        deck.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
 
     useEffect(() => {
@@ -57,9 +66,6 @@ export function MyDecks() {
         }
     }, [user]);
 
-
-    const [sortedDecks, setSortedDecks] = useState(decks);
-    const [sortOption, setSortOption] = useState('');
 
     useEffect(() => {
         const sortDecks = () => {
@@ -132,31 +138,36 @@ export function MyDecks() {
                 </header>
                 <main className="container mx-auto py-8 px-6">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-full max-w-md">
+                        <div className="flex items-center gap-4 max-w-md w-full">
+                            <div className="relative basis-3/4">
                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <Input
                                     type="search"
                                     placeholder="Search decks..."
                                     className="pl-10 pr-4 py-2 rounded-md bg-card border-input focus:border-primary focus:ring-primary"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Select onValueChange={(value) => setSortOption(value)}>
-                                <SelectTrigger className="px-4 py-2 rounded-md bg-card border-input focus:border-primary focus:ring-primary">
-                                    <SelectValue placeholder="Sort by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="newest">Newest</SelectItem>
-                                    <SelectItem value="oldest">Oldest</SelectItem>
-                                    <SelectItem value="title">Title</SelectItem>
-                                    <SelectItem value="flashcards">Flashcards</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="basis-1/4">
+                                <Select onValueChange={(value) => setSortOption(value)}>
+                                    <SelectTrigger className="px-4 py-2 rounded-md bg-card border-input focus:border-primary focus:ring-primary">
+                                        <SelectValue placeholder="Sort by" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="newest">Newest</SelectItem>
+                                        <SelectItem value="oldest">Oldest</SelectItem>
+                                        <SelectItem value="title">Title</SelectItem>
+                                        <SelectItem value="flashcards">Flashcards</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                         </div>
                         <Button>Create New Deck</Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-48">
-                        {sortedDecks.map(deck => (
+                        {filteredDecks.map(deck => (
                             <Card key={deck.id} className="flex flex-col h-auto max-w-md">
                                 <CardContent className="p-4 flex flex-col flex-grow">
                                     <div className="flex items-center justify-between mb-2">
